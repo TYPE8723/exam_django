@@ -1,11 +1,11 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 # <HINT> Import any new Models here
-from .models import Course, Enrollment
+from .models import Course, Enrollment, Lesson, Question, Choice
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
-from django.views import generic
+from django.views import generic,View
 from django.contrib.auth import login, logout, authenticate
 import logging
 # Get an instance of a logger
@@ -84,9 +84,46 @@ class CourseListView(generic.ListView):
         return courses
 
 
-class CourseDetailView(generic.DetailView):
-    model = Course
-    template_name = 'onlinecourse/course_detail_bootstrap.html'
+class CourseDetailView(View):
+    #model = Course
+    #template_name = 'onlinecourse/course_detail_bootstrap.html'
+    def get(self,request,pk):
+        lesson_data = Lesson.objects.filter(course_id = pk).select_related('course')
+        data_id = []
+        lesson = []
+        for i in lesson_data:
+            data = {}
+            data['course_name'] = i.course.name
+            data['order'] = i.order
+            data['title'] = i.title
+            data['content'] = i.content
+            data['lesson_id'] = i.id
+            data_id.append(i.id)#collects list of lesson id to get questions
+            lesson.append(data)
+        Questions_data = Question.objects.filter(lesson__in = data_id).select_related('lesson')
+        data_id = []
+        Questions = []
+        for i in Questions_data:
+            data = {}
+            data['question_id'] = i.id
+            data['question_text'] = i.question
+            data['mark'] = i.mark
+            data['visibility_status'] = i.visibility_status
+            data['lesson_id'] = i.lesson.id
+            data_id.append(i.id)#collects list of questions to obtain the choices related to this questions
+            Questions.append(data)
+        Choices_data = Choice.objects.filter(question__in = data_id).select_related('question')
+        Choices = []
+        for i in Choices_data:
+            data = {}
+            data['id'] = i.id
+            data['choice_text'] = i.content
+            data['visibility_status'] = i.visibility_status#Visibility status is used to hide/unhide options from users
+            data['question_id'] = i.question.id
+            Choices.append(data)
+        content = {'lessons':lesson,'questions':Questions,'choices':Choices}
+        print(content)
+        return render(request,'onlinecourse/course_detail_bootstrap.html',content)
 
 
 def enroll(request, course_id):

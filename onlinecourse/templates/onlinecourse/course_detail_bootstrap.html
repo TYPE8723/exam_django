@@ -41,12 +41,43 @@
 
     <!-- Page content -->
     <div class="container-fluid">
-            <h2>{{ course.name }}</h2>
+            <h2>{{ lessons.0.course_name }}</h2>
             <div class="card-columns-vertical">
-                {% for lesson in course.lesson_set.all %}
+                {% for lesson in lessons %}
                     <div class="card mt-1">
                         <div class="card-header"><h5>Lesson {{lesson.order|add:1}}: {{lesson.title}}</h5></div>
                         <div class="card-body">{{lesson.content}}</div>
+                        {% if user.is_authenticated %}
+                        <button type="button" class="btn btn-primary" data-toggle="collapse" data-target="#demo{{lesson.lesson_id}}">Start Exam</button>
+                        <div id="demo{{lesson.lesson_id}}" class="collapse">
+                            <!-- questions-->
+                            <form id="questionform" action="point to a submit view" method="post">
+                                <div class="card mt-1">
+                                    {% for ques in questions %}
+                                        {% if ques.lesson_id == lesson.lesson_id %}
+                                            <div class="card-header"><h5>{{ ques.question_text}}</h5></div>
+                                            {% csrf_token %}
+                                            {% for choice in choices %}
+                                                {% if choice.question_id == ques.question_id and choice.visibility_status == True %}<!--Visibility status is used to hide/unhide options from users -->
+                                                    <div class="form-group">
+                                                        <div class="form-check">
+                                                            <label class="form-check-label">
+                                                                <input type="checkbox" name="choice_{{choice.id}}"
+                                                                    class="form-check-input" id="{{choice.id}}"
+                                                                    value="{{choice.id}}">{{ choice.choice_text }}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            <input class="btn btn-success btn-block" type="submit" value="Submit">
+                        </form>
+                        
+                        </div>
+                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
