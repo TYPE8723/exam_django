@@ -1,7 +1,8 @@
+from random import choices
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 # <HINT> Import any new Models here
-from .models import Course, Enrollment, Lesson, Question, Choice
+from .models import Course, Enrollment, Lesson, Question, Choice, Submission
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
@@ -122,7 +123,6 @@ class CourseDetailView(View):
             data['question_id'] = i.question.id
             Choices.append(data)
         content = {'lessons':lesson,'questions':Questions,'choices':Choices}
-        print(content)
         return render(request,'onlinecourse/course_detail_bootstrap.html',content)
 
 
@@ -147,8 +147,18 @@ def enroll(request, course_id):
          # Collect the selected choices from exam form
          # Add each selected choice object to the submission object
          # Redirect to show_exam_result with the submission id
-#def submit(request, course_id):
-
+def submit(request, course_id):
+    enrollment = Enrollment.objects.get(user = request.user.id, course = course_id)
+    sub_id = Submission( enrollment = enrollment )
+    sub_id.save()
+    post_data = request.POST
+    for choices in post_data:
+        if choices == 'csrfmiddlewaretoken':
+            pass
+        else:
+            choice_id = Choice.objects.get(id = post_data[choices])
+            sub_id.choices.add(choice_id)
+    return redirect('/onlinecourse/'+str(course_id)+'/submission/'+str(sub_id.id)+'/results/')
 
 # <HINT> A example method to collect the selected choices from the exam form from the request object
 #def extract_answers(request):
@@ -167,7 +177,41 @@ def enroll(request, course_id):
         # Get the selected choice ids from the submission record
         # For each selected choice, check if it is a correct answer or not
         # Calculate the total score
-#def show_exam_result(request, course_id, submission_id):
-
+def show_exam_result(request, course_id, submission_id):
+    #print(course_id, submission_id)
+    submitted_answers = Submission.objects.get(id = submission_id).choices.all()
+    total_score,achived_score = 0,0
+    user_choices,question_list,choice_list = [],[],[]
+    lesson_id = 0
+    question_id = []
+    for i in submitted_answers:
+        user_choices.append(i.id)
+        if i.correct_choice == True:
+            achived_score = achived_score + i.question.mark
+        total_score = total_score +i.question.mark
+        lesson_id = i.question.lesson
+    questions = Question.objects.filter(lesson = lesson_id)
+    for i in questions:
+        data = {}
+        data['question_id'] = i.id
+        data['question_text'] = i.question
+        data['mark'] = i.mark
+        data['visibility_status'] = i.visibility_status
+        question_id.append(i.id)
+        question_list.append(data)
+    print(question_id)
+    choices = Choice.objects.filter(question__in = question_id)
+    for i in choices:
+        data = {}
+        data['id'] = i.id
+        data['choice_text'] = i.content
+        data['visibility_status'] = i.visibility_status#Visibility status is used to hide/unhide options from users
+        data['correct_choice'] = i.correct_choice
+        data['question_id'] = i.question.id
+        choice_list.append(data)  
+    content = { 'course':course_id,'selected_id':user_choices,'achived_score':achived_score,'total_score':total_score,"grade":(achived_score/total_score)*100,'questions':question_list,'choices':choice_list}
+    #print(content)
+    return render(request, 'onlinecourse/exam_result_bootstrap.html',content)
+    
 
 
