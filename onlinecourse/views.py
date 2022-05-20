@@ -183,14 +183,29 @@ def show_exam_result(request, course_id, submission_id):
     total_score,achived_score = 0,0
     user_choices,question_list,choice_list = [],[],[]
     lesson_id = 0
-    question_id = []
+    temp_question = []#multi dimensional list to keep question and its mark
+    user_answers = []
+    #print(submitted_answers)
     for i in submitted_answers:
+        question_data = []
+        answer_data = []
+        question_data.append(i.question.id)#question_id
+        question_data.append(i.question.mark)#question_mark
+        if question_data in temp_question:
+            pass
+        else:
+            temp_question.append(question_data)
         user_choices.append(i.id)
         if i.correct_choice == True:
             achived_score = achived_score + i.question.mark
-        total_score = total_score +i.question.mark
+            answer_data.append(i.question.id)
+            answer_data.append(i.id)
+            user_answers.append(answer_data)
         lesson_id = i.question.lesson
+    for i in temp_question:
+        total_score = total_score + i[1]#total marks 
     questions = Question.objects.filter(lesson = lesson_id)
+    question_id = []
     for i in questions:
         data = {}
         data['question_id'] = i.id
@@ -199,8 +214,8 @@ def show_exam_result(request, course_id, submission_id):
         data['visibility_status'] = i.visibility_status
         question_id.append(i.id)
         question_list.append(data)
-    print(question_id)
     choices = Choice.objects.filter(question__in = question_id)
+    choice_set=[]
     for i in choices:
         data = {}
         data['id'] = i.id
@@ -208,9 +223,34 @@ def show_exam_result(request, course_id, submission_id):
         data['visibility_status'] = i.visibility_status#Visibility status is used to hide/unhide options from users
         data['correct_choice'] = i.correct_choice
         data['question_id'] = i.question.id
-        choice_list.append(data)  
-    content = { 'course':course_id,'selected_id':user_choices,'achived_score':achived_score,'total_score':total_score,"grade":(achived_score/total_score)*100,'questions':question_list,'choices':choice_list}
-    #print(content)
+        choice_list.append(data)
+        if i.correct_choice == True:
+            choice_data = [] #[question_id,choice1,choicce2,choice3,.....]  
+            choice_data.append(i.question.id)
+            choice_data.append(i.id)
+            choice_set.append(choice_data)
+    correct_choice_count = {}
+    user_choice_count = {}
+    for i in temp_question:
+        count = 0
+        ucount = 0
+        for j in choice_set:
+            if i[0] == j[0]:
+                correct_choice_count[str(i[0])] = count+1
+                count = count+1
+        for k in user_answers:
+            if i[0] == k[0]:
+                user_choice_count[str(i[0])] = ucount+1
+                ucount = ucount+1
+        correct_choice_count[str(i[0])] = i[1]/correct_choice_count[str(i[0])]
+    scored_marks = []
+    for i in correct_choice_count:
+        scored_marks.append(user_choice_count[i]*correct_choice_count[i])
+    scored_marks = sum(scored_marks)
+    try:
+        content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':scored_marks,'total_score':float(total_score),"grade":(scored_marks/total_score)*100,'questions':question_list,'choices':choice_list,'zero_error':''}
+    except ZeroDivisionError :
+       content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':'','total_score':'',"grade":'1','questions':question_list,'choices':choice_list,'zero_error':'Select the given choices'} 
     return render(request, 'onlinecourse/exam_result_bootstrap.html',content)
     
 

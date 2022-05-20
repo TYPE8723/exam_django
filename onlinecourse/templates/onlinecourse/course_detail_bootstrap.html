@@ -6,6 +6,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    
     <meta charset="UTF-8">
 </head>
 
@@ -55,11 +56,13 @@
                                 <div class="card mt-1">
                                     {% for ques in questions %}
                                         {% if ques.lesson_id == lesson.lesson_id %}
-                                            <div class="card-header"><h5>{{ ques.question_text}}</h5></div>
+                                            <div class="card-header"><h5>{{ ques.question_text}}</h5>
+                                            mark:{{ ques.mark}}</div>
                                             {% csrf_token %}
+                                            <div class="form-group">
                                             {% for choice in choices %}
                                                 {% if choice.question_id == ques.question_id and choice.visibility_status == True %}<!--Visibility status is used to hide/unhide options from users -->
-                                                    <div class="form-group">
+                                                    
                                                         <div class="form-check">
                                                             <label class="form-check-label">
                                                                 <input type="checkbox" name="choice_{{choice.id}}"
@@ -67,9 +70,10 @@
                                                                     value="{{choice.id}}">{{ choice.choice_text }}
                                                             </label>
                                                         </div>
-                                                    </div>
+                                                   
                                                     {% endif %}
                                             {% endfor %}
+                                        </div>
                                         {% endif %}
                                     {% endfor %}
                                 </div>
