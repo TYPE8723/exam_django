@@ -215,6 +215,14 @@ def show_exam_result(request, course_id, submission_id):
         question_id.append(i.id)
         question_list.append(data)
     choices = Choice.objects.filter(question__in = question_id)
+    try:
+        validation_count = Question.objects.filter(lesson = choices[0].question.lesson.id).count()
+        if validation_count != len(temp_question):
+            content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':'','total_score':'*****Please give answers for all question****',"grade":'1','questions':question_list,'choices':choice_list} 
+            return render(request, 'onlinecourse/exam_result_bootstrap.html',content)
+    except IndexError:
+        content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':'','total_score':'*****Please give answers for all question****',"grade":'1','questions':question_list,'choices':choice_list} 
+        return render(request, 'onlinecourse/exam_result_bootstrap.html',content)
     choice_set=[]
     for i in choices:
         data = {}
@@ -245,10 +253,13 @@ def show_exam_result(request, course_id, submission_id):
         correct_choice_count[str(i[0])] = i[1]/correct_choice_count[str(i[0])]
     scored_marks = []
     for i in correct_choice_count:
-        scored_marks.append(user_choice_count[i]*correct_choice_count[i])
+        try:
+            scored_marks.append(user_choice_count[i]*correct_choice_count[i])
+        except:
+            pass
     scored_marks = sum(scored_marks)
     try:
-        content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':scored_marks,'total_score':float(total_score),"grade":(scored_marks/total_score)*100,'questions':question_list,'choices':choice_list,'zero_error':''}
+        content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':scored_marks,'total_score':'/'+str(float(total_score)),"grade":(scored_marks/total_score)*100,'questions':question_list,'choices':choice_list,'zero_error':''}
     except ZeroDivisionError :
        content = { 'course_id':course_id,'selected_id':user_choices,'achived_score':'','total_score':'',"grade":'1','questions':question_list,'choices':choice_list,'zero_error':'Select the given choices'} 
     return render(request, 'onlinecourse/exam_result_bootstrap.html',content)
