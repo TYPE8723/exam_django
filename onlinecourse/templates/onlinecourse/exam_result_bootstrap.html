@@ -64,18 +64,18 @@
                                     <label class="form-check-label">
                                         {% if choice.correct_choice == True and choice.id in selected_id %}
                                             <div class="text-success">
-                                                <strong>Correct answer : </strong>{{ choice.choice_text }}| {{ choice.id }}
+                                                <strong>Correct answer : </strong>{{ choice.choice_text }}
                                             </div>
                                         {% elif choice.correct_choice == True and choice.id not in selected_id%}
                                             <div class="text-warning">
-                                                <strong>Not selected : </strong>{{ choice.choice_text }}| {{ choice.id }}
+                                                <strong>Not selected : </strong>{{ choice.choice_text }}
                                             </div>
                                         {% elif choice.correct_choice == False and choice.id in selected_id%}
                                             <div class="text-danger">
-                                                <strong>Wrong selection : </strong>{{ choice.choice_text }}| {{ choice.id }}
+                                                <strong>Wrong selection : </strong>{{ choice.choice_text }}
                                             </div>
                                         {% else %}
-                                            {{ choice.choice_text }}| {{ choice.id }}
+                                            {{ choice.choice_text }}
                                         {% endif %}
                                     </label>
                                 </div>

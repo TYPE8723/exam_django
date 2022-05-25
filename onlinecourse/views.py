@@ -12,6 +12,7 @@ import logging
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 # Create your views here.
+#submission branch. code cleaned for reuse.
 
 
 def registration_request(request):
